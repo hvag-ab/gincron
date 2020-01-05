@@ -54,7 +54,7 @@ func Setup() {
 
 	//日志是一个接口，通过设置日志，可以显示SQL，警告以及错误等，默认的显示级别为INFO。
 
-	DB.ShowSQL(true)//则会在控制台打印出生成的SQL语句；
+	// DB.ShowSQL(true)//则会在控制台打印出生成的SQL语句；
 	// f, err := os.Create("sql.log")//输出sql语句日志
 	// if err != nil {
 	// 	println(err.Error())

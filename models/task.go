@@ -3,7 +3,6 @@ package models
 import (
 	"myproject/db"
 	"time"
-	"log"
 	"fmt"
 	"myproject/pkg/util"
 )
@@ -12,12 +11,16 @@ const (
 	TASK_SUCCESS = 0  // 任务执行成功
 	TASK_ERROR   = -1 // 任务执行出错
 	TASK_TIMEOUT = -2 // 任务执行超时
+
+	SHELL = 0
+	API = 1
+	PYTHON = 2
 )
 
 type Task struct {
 	Id           int
 	TaskName     string `form:"task_name"  json:"task_name" binding:"required"`
-	TaskType     int 
+	TaskType     int `form:"task_type"  json:"task_type"`
 	Description  string `form:"description"  json:"description"`
 	CronSpec     string `form:"cron_spec"  json:"cron_spec" binding:"required"`
 	Concurrent   int `form:"concurrent"  json:"concurrent" binding:"gte=0,lte=1"`
@@ -33,7 +36,6 @@ type Task struct {
 func (t *Task) Update() bool {
 	affected, err := db.DB.Table("task").Where("task.id=?",t.Id).Update(t)
 	if err != nil {
-		log.Fatal("错误:", err)
 		return false
 	}
 	if affected == 0 {
@@ -59,7 +61,6 @@ func TaskAdd(task *Task) (int64, bool) {
 	}
 	affected, err := db.DB.Table("task").Insert(task)
 	if err != nil {
-		log.Fatal("错误:", err)
 		return affected, false
 	}
 	return affected, true
@@ -110,17 +111,20 @@ func TaskGetList(page int, condition map[string]interface{}) ([]*Task, map[strin
 func TaskGetById(id int) (*Task, error) {
 	task := &Task{}
 
-	_,err := db.DB.Table("task").Where("task.id = ?", id).Get(task)
+	has,err := db.DB.Table("task").Where("task.id = ?", id).Get(task)
 	if err != nil {
 		return nil, err
+	}
+	if has == false {
+		return nil,nil
 	}
 	return task, nil
 }
 
-func TaskDel(id int) error {
+func TaskDel(id int) (int64,error) {
 	task := &Task{}
-	_, err := db.DB.Table("task").Where("task.id = ?", id).Delete(task)
-	return err
+	affected, err := db.DB.Table("task").Where("task.id = ?", id).Delete(task)
+	return affected, err
 }
 
 func TaskInitList(page, pageSize int, status int) ([]*Task, error) {

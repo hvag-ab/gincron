@@ -1,7 +1,7 @@
 package project
 
 import (
-	libcron "github.com/lisijie/cron"
+	libcron "github.com/robfig/cron/v3"
 	"myproject/pkg/jobs"
 	"myproject/models"
 	"time"
@@ -77,10 +77,8 @@ func Add(c *gin.Context) {
 		appG.ErrorResponse(404, err.Error())
 		return 
 	}
-	fmt.Printf("%+v",task)
 
-
-	if _, err := libcron.Parse(task.CronSpec); err != nil {
+	if _, err := libcron.ParseStandard(task.CronSpec); err != nil {
 		appG.ErrorResponse(404, "cron表达式无效")
 		return 
 	}
@@ -102,6 +100,10 @@ func Edit(c *gin.Context) {
 	task, err := models.TaskGetById(id)
 	if err != nil {
 		appG.ErrorResponse(404, fmt.Sprintf("id:[%d]不存在",id))
+		return 
+	}
+	if task == nil {
+		appG.ErrorResponse(404, "此任务不存在")
 		return 
 	}
 
@@ -132,9 +134,18 @@ func Edit(c *gin.Context) {
 		}
 		task.Timeout = to
 	}
+	task_type := c.DefaultPostForm("task_type", "")
+	if task_type != "" {
+		ttype,error := strconv.Atoi(task_type)
+		if error != nil{
+			appG.ErrorResponse(404, "task_type必须为一个整数")
+			return 
+		}
+		task.TaskType = ttype
+	}
 
 	if task.CronSpec !=""{
-		if _, err := libcron.Parse(task.CronSpec); err != nil {
+		if _, err := libcron.ParseStandard(task.CronSpec); err != nil {
 			appG.ErrorResponse(404, "cron表达式无效")
 			return 
 		}
@@ -170,24 +181,35 @@ func Batch(c *gin.Context) {
 		}
 		switch json.Action {
 		case "active":
-			if task, err := models.TaskGetById(id); err == nil {
+			if task, err := models.TaskGetById(id); err == nil && task != nil {
 				job, err := jobs.NewJobFromTask(task)
 				if err == nil {
 					jobs.AddJob(task.CronSpec, job)
 					task.Status = 1
 					task.Update()
 				}
+			}else{
+				appG.Response(200,"批量操作任务失败")
+				return
 			}
 		case "pause":
-			jobs.RemoveJob(id)
-			if task, err := models.TaskGetById(id); err == nil {
+			if task, err := models.TaskGetById(id); err == nil && task != nil {
 				task.Status = 0
 				task.Update()
+				jobs.RemoveJob(id)
+			}else{
+				appG.Response(200,"批量操作任务失败")
+				return 
 			}
+			
 		case "delete":
-			models.TaskDel(id)
-			models.TaskLogDelByTaskId(id)
-			jobs.RemoveJob(id)
+			if affected, err := models.TaskDel(id); err == nil && affected != 0 {
+				models.TaskLogDelByTaskId(id)
+				jobs.RemoveJob(id)
+			}else{
+				appG.Response(200,"批量操作任务失败")
+				return 
+			}
 		}
 	}
 	appG.Response(200,"批量操作任务成功")
@@ -202,6 +224,10 @@ func Start(c *gin.Context) {
 	task, err := models.TaskGetById(id)
 	if err != nil {
 		appG.ErrorResponse(404, "启动失败")
+		return 
+	}
+	if task == nil {
+		appG.ErrorResponse(404, "此任务不存在")
 		return 
 	}
 
@@ -228,6 +254,10 @@ func Pause(c *gin.Context) {
 		appG.ErrorResponse(404, "暂停任务失败")
 		return 
 	}
+	if task == nil {
+		appG.ErrorResponse(404, "此任务不存在")
+		return 
+	}
 
 	jobs.RemoveJob(id)
 	task.Status = 0
@@ -242,14 +272,19 @@ func Deljob(c *gin.Context) {
 	appG := app.Gin{C: c}
 	id := com.StrTo(c.PostForm("id")).MustInt()
 
-	err := models.TaskDel(id)
+	affected, err := models.TaskDel(id)
 	if err != nil {
 		appG.ErrorResponse(404, "删除任务失败")
+		return 
+	}
+	if affected == 0 {
+		appG.ErrorResponse(404, "此任务不存在 删除任务失败")
 		return 
 	}
 
 	err2 := models.TaskLogDelByTaskId(id)
 	if err2 != nil {
+		fmt.Println(err2.Error())
 		appG.ErrorResponse(404, "删除任务日志失败")
 		return 
 	}

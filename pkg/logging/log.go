@@ -38,8 +38,8 @@ func Setup() {
 
 
 	//定制日志 日志等级InfoLevel DebugLeve WarnLevel ErrorLevel DPanicLevel PanicLevel FatalLevel
-	AppLogger = NewLogger(LogSetting.App, zapcore.InfoLevel, 128, 30, 7, true, LogSetting.ServiceName)
-	HTTPLogger = NewLogger(LogSetting.Http, zapcore.InfoLevel, 128, 30, 7, true, LogSetting.ServiceName)
+	AppLogger = NewLogger(LogSetting.App, zapcore.WarnLevel, 128, 30, 7, true, LogSetting.ServiceName)
+	HTTPLogger = NewLogger(LogSetting.Http, zapcore.WarnLevel, 128, 30, 7, true, LogSetting.ServiceName)
 	/*
 	使用方法
 	logging.AppLogger.Fatal(fmt.Sprint("Server Shutdown:",err), zap.Error(err))

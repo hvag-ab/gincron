@@ -6,7 +6,8 @@ import (
 	"myproject/models"
 	"runtime/debug"
 	"time"
-	
+	"myproject/pkg/logging"
+	"go.uber.org/zap"
 )
 
 
@@ -23,54 +24,45 @@ type Job struct {
 
 func NewJobFromTask(task *models.Task) (*Job, error) {
 	if task.Id < 1 {
+		logging.AppLogger.Fatal("ToJob: 缺少id", zap.Int("jobid",task.Id))
 		return nil, fmt.Errorf("ToJob: 缺少id")
 	}
-	job := NewCommandJob(task.Id, task.TaskName, task.Command)
+	job := NewCommandJob(task)
 	job.task = task
 	job.Concurrent = task.Concurrent == 1
 	return job, nil
 }
 
-func NewCommandJob(id int, name string, command string) *Job {
+func NewCommandJob(task *models.Task) *Job {
 	job := &Job{
-		id:   id,
-		name: name,
+		id:   task.Id,
+		name: task.TaskName,
 	}
 	job.runFunc = func(timeout time.Duration) (string, string, error, bool) {
-		// return Interprete(timeout, command)
-		return HttpGet(timeout, command)
-	
+		switch task.TaskType {
+
+		case models.API:
+			return HttpGet(timeout, task)
+		default:
+			return Interprete(timeout, task)
+		}
 	}
 
 	return job
 }
 
-func (j *Job) Status() int {
-	return j.status
-}
 
-func (j *Job) GetName() string {
-	return j.name
-}
-
-func (j *Job) GetId() int {
-	return j.id
-}
-
-func (j *Job) GetLogId() int64 {
-	return j.logId
-}
 
 //自定义job 必须实现RUN接口 
 func (j *Job) Run() {
 	if !j.Concurrent && j.status > 0 {
-		fmt.Print(fmt.Sprintf("任务[%d]上一次执行尚未结束，本次被忽略。", j.id))
+		logging.AppLogger.Warn("上一次执行尚未结束，本次被忽略", zap.Int("jobid",j.id))
 		return
 	}
 
 	defer func() {
 		if err := recover(); err != nil {
-			fmt.Print(err, "\n", string(debug.Stack()))
+			logging.AppLogger.Fatal("err:", zap.String("err",string(debug.Stack())))
 		}
 	}()
 
@@ -80,8 +72,7 @@ func (j *Job) Run() {
 			<-workPool
 		}()
 	}
-
-	fmt.Print(fmt.Sprintf("开始执行任务: %d", j.id))
+	logging.Logger.Info("开始执行任务:", zap.Int("jobid",j.id))
 
 	j.status++
 	defer func() {
@@ -113,7 +104,7 @@ func (j *Job) Run() {
 		log.Status = models.TASK_ERROR
 		log.Error = err.Error() + ":" + cmdErr
 	}
-	fmt.Println(log)
+
 	j.logId, _ = models.TaskLogAdd(log)
 
 	// 更新上次执行时间

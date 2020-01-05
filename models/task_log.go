@@ -2,7 +2,6 @@ package models
 
 import (
 	"myproject/db"
-	"log"
 	"myproject/pkg/util"
 	"fmt"
 )
@@ -23,7 +22,6 @@ func TaskLogAdd(t *TaskLog) (int64, bool) {
 
 	affected, err := db.DB.Table("task_log").Insert(t)
 	if err != nil {
-		log.Fatal("错误:", err)
 		return affected, false
 	}
 	return affected, true
@@ -89,6 +87,6 @@ func TaskLogDelById(id int) error {
 
 func TaskLogDelByTaskId(taskId int) error {
 	task := &TaskLog{}
-	_, err := db.DB.Table("task_log").Where("taskId=?",taskId).Delete(task)
+	_, err := db.DB.Table("task_log").Where("task_id=?",taskId).Delete(task)
 	return err
 }

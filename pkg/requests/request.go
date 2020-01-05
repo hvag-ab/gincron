@@ -34,10 +34,10 @@ func Get(url string, timeout time.Duration) (string, string, error, bool) {
 // 发送POST请求
 // url：         请求地址
 // data：        POST请求提交的数据
-// contentType： 请求体格式，如：application/json
+// contentType： 请求体格式，如：application/json   application/x-www-form-unlencoded
 // content：     请求放回的内容
-func Post(url string, data interface{}, contentType string, timeout time.Duration) (string, string, error, bool) {
-
+func Post(url string, data interface{}, timeout time.Duration) (string, string, error, bool) {
+    contentType := "application/x-www-form-unlencoded"
     // 超时时间：5秒
     client := &http.Client{Timeout: time.Duration(timeout) * time.Second}
     jsonStr, _ := json.Marshal(data)

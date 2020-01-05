@@ -6,8 +6,6 @@ import (
 
 	"myproject/control"
 
-
-	// "github.com/gin-contrib/cors"
 )
 
 

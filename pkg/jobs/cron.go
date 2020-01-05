@@ -36,6 +36,9 @@ func AddJob(spec string, job *Job) bool {
 
 func RemoveJob(id int) {
 	entry := GetEntryById(id)
+	if entry == nil {
+		return 
+	}
 	ID := entry.ID
 	mainCron.Remove(ID)
 	

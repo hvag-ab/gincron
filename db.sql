@@ -1,7 +1,7 @@
 CREATE TABLE `task` (
   `id` int(11) unsigned NOT NULL AUTO_INCREMENT,
   `task_name` varchar(50) NOT NULL DEFAULT '' COMMENT '任务名称',
-  `task_type` tinyint(4) NOT NULL DEFAULT '0' COMMENT '任务类型',
+  `task_type` tinyint(4) NOT NULL DEFAULT '0' COMMENT '解释器类型0 shell 1 api 2 python',
   `description` varchar(200) NOT NULL DEFAULT '' COMMENT '任务描述',
   `cron_spec` varchar(100) NOT NULL DEFAULT '' COMMENT '时间表达式',
   `concurrent` tinyint(4) NOT NULL DEFAULT '0' COMMENT '是否只允许一个实例',

@@ -1,0 +1,2 @@
+{"level":"fatal","time":"2020-01-05T15:39:37.306+0800","linenum":"/Users/lihong/Downloads/myproject/pkg/jobs/job.go:27","msg":"ToJob: 缺少id","serviceName":"go-gin-cron","jobid":0}
+{"level":"fatal","time":"2020-01-05T15:40:58.969+0800","linenum":"/Users/lihong/Downloads/myproject/pkg/jobs/job.go:27","msg":"ToJob: 缺少id","serviceName":"go-gin-cron","jobid":0}
