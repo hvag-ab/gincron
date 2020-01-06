@@ -43,7 +43,7 @@ func TaskLogCount(condition map[string]interface{}) (int64,error) {
 	return resultCount,terr
 }
 
-func TaskLogGetList(page int, condition map[string]interface{}) ([]*TaskLog, map[string]interface{},error) {
+func TaskLogGetList(page int, pageSize int, condition map[string]interface{}) ([]*TaskLog, map[string]interface{},error) {
 
 	tasks := make([]*TaskLog, 0)
 	
@@ -52,7 +52,7 @@ func TaskLogGetList(page int, condition map[string]interface{}) ([]*TaskLog, map
 		return tasks,map[string]interface{}{},terr
 	}
 
-	paginatorMap := util.Paginator(resultCount,page)
+	paginatorMap := util.Paginator(resultCount,page,pageSize)
 
 
 	query := db.DB.Table("task_log")

@@ -2,15 +2,16 @@ package util
 
 import (
 	"math"
-	"myproject/pkg/setting"
 )
 
-var pageSize int = setting.PageSize
 
-func Paginator(nums int64, page int) map[string]interface{} {
+func Paginator(nums int64, page int, pageSize int) map[string]interface{} {
 
 	if page ==0{
 		page = 1
+	}
+	if pageSize <1 {
+		pageSize = 1
 	}
 	var
 	(

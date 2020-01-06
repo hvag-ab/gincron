@@ -12,22 +12,47 @@ import (
 	"strconv"
 )
 
+//切记参数绑定时候 常量不能设置为0 “” 否则 reqired 会报错
+const (
+	ACTIVE = 1
+	PAUSE = 2
+	DELETE = 3
+)
 
 
 // 任务列表
 func List(c *gin.Context) {
 	appG := app.Gin{C: c}
 	page := com.StrTo(c.DefaultQuery("page","1")).MustInt()
-	status := com.StrTo(c.DefaultQuery("status","1")).MustInt()
+	pageSize := com.StrTo(c.DefaultQuery("page_size","10")).MustInt()
 
 	cond := make(map[string]interface{})
-	cond["status"] = status
+	
+	task_name := c.DefaultQuery("task_name", "")
+	if task_name != "" {
+		cond["task_name"] = task_name
+	}
+	cron_spec := c.DefaultQuery("cron_spec", "")
+	if cron_spec != "" {
+		cond["cron_spec"] = cron_spec
+	}
+
+	status := c.DefaultQuery("status", "")
+	if status!= "" {
+		st,error := strconv.Atoi(status)
+		if error != nil{
+			appG.ErrorResponse(404, "status必须为一个整数")
+			return 
+		}
+		cond["status"] = st
+	}
+
 
 	if page < 1 {
 		page = 1
 	}
 
-	result,paginatorMap,errr := models.TaskGetList(page,cond)
+	result,paginatorMap,errr := models.TaskGetList(page,pageSize,cond)
 	if errr != nil {
 		appG.ErrorResponse(404, "查询任务失败")
 		return
@@ -35,8 +60,8 @@ func List(c *gin.Context) {
 	list := make([]map[string]interface{}, len(result))
 	for k, v := range result {
 		row := make(map[string]interface{})
-		row["id"] = v.Id
-		row["name"] = v.TaskName
+		row["task_id"] = v.Id
+		row["task_name"] = v.TaskName
 		row["cron_spec"] = v.CronSpec
 		row["status"] = v.Status
 		row["description"] = v.Description
@@ -163,7 +188,7 @@ func Edit(c *gin.Context) {
 
 
 type BatchJson struct {
-	Action     string `form:"action" json:"action"  binding:"required"`
+	Action     int `form:"action" json:"action"  binding:"required"`
     Ids []int `form:"ids" json:"ids" binding:"required"`
 }
 // // 批量操作
@@ -171,7 +196,7 @@ func Batch(c *gin.Context) {
 	appG := app.Gin{C: c}
 	var json BatchJson
 	if err := c.ShouldBindJSON(&json); err != nil {
-		appG.ErrorResponse(404, "批量操作传入json失败")
+		appG.ErrorResponse(404, err.Error())
 		return 
 	}
 	for _, id := range json.Ids {
@@ -180,7 +205,7 @@ func Batch(c *gin.Context) {
 			continue
 		}
 		switch json.Action {
-		case "active":
+		case ACTIVE:
 			if task, err := models.TaskGetById(id); err == nil && task != nil {
 				job, err := jobs.NewJobFromTask(task)
 				if err == nil {
@@ -192,7 +217,7 @@ func Batch(c *gin.Context) {
 				appG.Response(200,"批量操作任务失败")
 				return
 			}
-		case "pause":
+		case PAUSE:
 			if task, err := models.TaskGetById(id); err == nil && task != nil {
 				task.Status = 0
 				task.Update()
@@ -202,7 +227,7 @@ func Batch(c *gin.Context) {
 				return 
 			}
 			
-		case "delete":
+		case DELETE:
 			if affected, err := models.TaskDel(id); err == nil && affected != 0 {
 				models.TaskLogDelByTaskId(id)
 				jobs.RemoveJob(id)
@@ -322,6 +347,7 @@ func Run(c *gin.Context) {
 func Logs(c *gin.Context) {
 	appG := app.Gin{C: c}
 	page := com.StrTo(c.DefaultQuery("page","1")).MustInt()
+	pageSize := com.StrTo(c.DefaultQuery("page_size","10")).MustInt()
 	task_id := com.StrTo(c.DefaultQuery("task_id","1")).MustInt()
 	cond := make(map[string]interface{})
 	cond["task_id"] = task_id
@@ -329,7 +355,7 @@ func Logs(c *gin.Context) {
 		page = 1
 	}
 
-	result,paginatorMap,errr := models.TaskLogGetList(page, cond)
+	result,paginatorMap,errr := models.TaskLogGetList(page, pageSize, cond)
 	if errr != nil {
 		appG.ErrorResponse(404, "查询任务id日志失败")
 		return
@@ -349,10 +375,14 @@ func Logs(c *gin.Context) {
 	appG.Response(200,paginatorMap)
 }
 
+type BatchJson2 struct {
+
+    Ids []int `form:"ids" json:"ids" binding:"required"`
+}
 // // 批量操作日志
 func LogBatch(c *gin.Context) {
 	appG := app.Gin{C: c}
-	var json BatchJson
+	var json BatchJson2
 	if err := c.ShouldBindJSON(&json); err != nil {
 		appG.ErrorResponse(404, "批量删除日志失败")
 		return 
