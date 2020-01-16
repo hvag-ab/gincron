@@ -213,7 +213,7 @@ func Batch(c *gin.Context) {
 				if err == nil {
 					jobs.AddJob(task.CronSpec, job)
 					task.Status = 1
-					task.Update()
+					task.UpdateStatus()
 				}
 			}else{
 				appG.Response(200,"批量操作任务失败")
@@ -222,7 +222,7 @@ func Batch(c *gin.Context) {
 		case PAUSE:
 			if task, err := models.TaskGetById(id); err == nil && task != nil {
 				task.Status = 0
-				task.Update()
+				task.UpdateStatus()
 				jobs.RemoveJob(id)
 			}else{
 				appG.Response(200,"批量操作任务失败")
@@ -266,7 +266,7 @@ func Start(c *gin.Context) {
 
 	if jobs.AddJob(task.CronSpec, job) {
 		task.Status = 1
-		task.Update()
+		task.UpdateStatus()
 	}
 
 	appG.Response(200,"启动任务成功")
@@ -288,7 +288,7 @@ func Pause(c *gin.Context) {
 
 	jobs.RemoveJob(id)
 	task.Status = 0
-	task.Update()
+	task.UpdateStatus()
 
 	appG.Response(200,"暂停任务成功")
 }
