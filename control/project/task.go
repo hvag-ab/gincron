@@ -133,6 +133,10 @@ func Edit(c *gin.Context) {
 		appG.ErrorResponse(404, "此任务不存在")
 		return 
 	}
+	if task.Status == 1{
+		appG.ErrorResponse(404, "该任务为启动状态 不允许修改")
+		return 
+	}
 
 	jobs.RemoveJob(id)
 
