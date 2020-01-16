@@ -65,6 +65,8 @@ func List(c *gin.Context) {
 		row["cron_spec"] = v.CronSpec
 		row["status"] = v.Status
 		row["description"] = v.Description
+                row["task_type"] = v.TaskType
+		row["command"] = v.Command
 
 		e := jobs.GetEntryById(v.Id)
 		if e != nil {
