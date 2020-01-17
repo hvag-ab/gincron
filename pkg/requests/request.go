@@ -14,20 +14,23 @@ import (
 // response：    请求返回的内容
 func Get(url string, timeout time.Duration) (string, string, error, bool) {
 
-    // 超时时间：5秒
     client := &http.Client{Timeout: time.Duration(timeout) * time.Second}
-	resp, err := client.Get(url)
+    resp, err := client.Get(url)
+    
 	var isTimeout bool
     if err != nil {
         isTimeout = true
 	}else{
 		isTimeout = false
-	}
-	status_code:= resp.StatusCode //获取返回状态码
+    }
+    if resp == nil{
+        return "",err.Error(), err, false
+    }
+	// status_code:= resp.StatusCode //获取返回状态码
     defer resp.Body.Close()
     body, err2 := ioutil.ReadAll(resp.Body)
 
-	return string(body),strconv.Itoa(status_code),err2,isTimeout                                                                                               
+	return string(body),"",err2,isTimeout                                                                                             
     
 }
 
