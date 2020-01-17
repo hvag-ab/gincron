@@ -370,11 +370,12 @@ func Logs(c *gin.Context) {
 	list := make([]map[string]interface{}, len(result))
 	for k, v := range result {
 		row := make(map[string]interface{})
-		row["id"] = v.Id
+		row["id"] = v.TaskId
 		row["start_time"] = time.Unix(v.CreateTime, 0).Format("2006-01-02 15:04:05")
 		row["process_time"] = float64(v.ProcessTime) / 1000
 		row["ouput_size"] = v.Output
 		row["status"] = v.Status
+		row["error"] = v.Error
 		list[k] = row
 	}
 	paginatorMap["data"] = list
