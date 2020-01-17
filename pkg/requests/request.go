@@ -24,7 +24,7 @@ func Get(url string, timeout time.Duration) (string, string, error, bool) {
 	isTimeout = false
     }
     if resp == nil{
-        return "",err.Error(), err, false
+        return "","", err, false
     }
     // status_code:= resp.StatusCode //获取返回状态码
     defer resp.Body.Close()
